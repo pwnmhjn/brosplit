@@ -1,15 +1,15 @@
-import { Response } from "express";
-import { AsyncWrap } from "../utils/AsyncWrap";
-import { checkReqBody } from "../utils/checkReqBody";
-import { ErrorResponse } from "../utils/ErrorResponse";
-import { Profile } from "../models/profileSchema";
-import { uploadOnCloudinary } from "../utils/cloudinary";
-import { cloudinary } from "../config/cloudinary.config";
+import { Response } from 'express';
+import { AsyncWrap } from '../utils/AsyncWrap';
+import { checkReqBody } from '../utils/checkReqBody';
+import { ErrorResponse } from '../utils/ErrorResponse';
+import { Profile } from '../models/profileSchema';
+import { uploadOnCloudinary } from '../utils/cloudinary';
+import { cloudinary } from '../config/cloudinary.config';
 import {
   AuthenticatedRequest,
   CreateProfileRequestBody,
-} from "../types/profile";
-import { SuccessResponse } from "../utils/SuccessResponse";
+} from '../types/profile';
+import { SuccessResponse } from '../utils/SuccessResponse';
 
 const createProfile = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -50,13 +50,13 @@ const createProfile = AsyncWrap(
         firstname: firstname,
       });
       if (existingProfile) {
-        throw new ErrorResponse(400, "User Already Exist");
+        throw new ErrorResponse(400, 'User Already Exist');
       }
       const profile = await Profile.create(userforDb);
       res
         .status(200)
         .json(
-          new SuccessResponse(200, { profile }, "Profile Created Successfully")
+          new SuccessResponse(200, { profile }, 'Profile Created Successfully')
         );
     } catch (error) {
       if (cloudinaryAvatar?.public_id) {
@@ -65,7 +65,7 @@ const createProfile = AsyncWrap(
         } catch {
           throw new ErrorResponse(
             400,
-            "Cloudnt destroy avatar after profile creation fail"
+            'Cloudnt destroy avatar after profile creation fail'
           );
         }
       }
