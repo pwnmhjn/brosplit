@@ -12,7 +12,7 @@ const signup = AsyncWrap(async (req: Request, res: Response) => {
     throw new ErrorResponse(400, "All fields are required.");
   }
 
-  console.log(email,password)
+  console.log(email, password);
   const existingUser = await User.findOne({ email });
   console.log(existingUser);
   if (existingUser) {
@@ -45,11 +45,14 @@ const signin = AsyncWrap(async (req: Request, res: Response) => {
   if (!password || !(email || username)) {
     throw new ErrorResponse(400, "Email/Username and password are required.");
   }
+  const orQuery = [];
+  if (email) orQuery.push({ email });
+  if (username) orQuery.push({ username });
+  if (orQuery.length === 0) {
+    throw new ErrorResponse(400, "Email or username is required.");
+  }
 
-  const user = await User.findOne({
-    $or: [{ email }, { username }],
-  });
-
+  const user = await User.findOne({ $or: orQuery });
   if (!user) {
     throw new ErrorResponse(400, "User not found.");
   }

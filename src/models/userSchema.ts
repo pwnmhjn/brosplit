@@ -5,6 +5,7 @@ export interface IUser extends Document {
   _id: Types.ObjectId;
   email: string;
   password: string;
+  username: String;
   refreshToken?: string;
   isPasswordCorrect(password: string): Promise<boolean>;
   generateRefreshToken(): string;
@@ -14,13 +15,18 @@ const userSchema = new mongoose.Schema<IUser>(
   {
     email: {
       type: String,
-      required: true,
       unique: true,
       trim: true,
+      required: true,
     },
     password: {
       type: String,
       required: [true, "Password is Required"],
+    },
+    username: {
+      type: String,
+      unique: true,
+      trim: true,
     },
     refreshToken: {
       type: String,
@@ -39,7 +45,8 @@ userSchema.methods.isPasswordCorrect = async function (
   this: IUser,
   password: string
 ): Promise<boolean> {
-  return await bcrypt.compare(password, this.password);
+  const isPasswordCorrect = await bcrypt.compare(password, this.password);
+  return isPasswordCorrect;
 };
 
 userSchema.methods.generateRefreshToken = function (this: IUser): string {
