@@ -4,7 +4,7 @@ import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger/swagger";
 import authRouter from "./routes/auth.routes";
 import profileRouter from "./routes/profile.routes";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { ErrorResponse } from "./utils/ErrorResponse";
 const app = express();
 
@@ -19,8 +19,8 @@ app.get("/", (_, res) => {
 app.use("/api/v1/auth/users", authRouter);
 app.use("/api/v1/profile", profileRouter);
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  let { statusCode = 500, message } = err;
+app.use((err: ErrorResponse, req: Request, res: Response) => {
+  const { statusCode = 500, message } = err;
   res.status(statusCode).json(new ErrorResponse(statusCode, message));
 });
 export { app };

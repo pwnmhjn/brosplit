@@ -1,4 +1,4 @@
-import mongoose, { Types, Document, Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const profileSchema = new mongoose.Schema(
   {

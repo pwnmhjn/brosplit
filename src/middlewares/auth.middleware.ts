@@ -42,7 +42,11 @@ export const verifyJwt = async (
     }
     req.user = user;
     next();
-  } catch (error: any) {
-    next(new ErrorResponse(403, error.message || "Unauthorized"));
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      next(new ErrorResponse(403, error.message || "Unauthorized"));
+    } else {
+      next(new ErrorResponse(403, "Unauthorized"));
+    }
   }
 };

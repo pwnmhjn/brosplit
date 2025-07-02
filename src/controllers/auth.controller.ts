@@ -4,17 +4,15 @@ import { ErrorResponse } from "../utils/ErrorResponse";
 import { User } from "../models/userSchema";
 import { SuccessResponse } from "../utils/SuccessResponse";
 import generateRefreshAndAccess from "../utils/generateRefreshAndAccess";
+import { SignInRequestBody, SignUpRequestBody } from "../types/user";
 
 const signup = AsyncWrap(async (req: Request, res: Response) => {
-  const { email, password } = req.body as { email?: string; password?: string };
+  const { email, password } = req.body as SignUpRequestBody;
 
   if ([email, password].some((field) => field?.trim() === " ")) {
     throw new ErrorResponse(400, "All fields are required.");
   }
-
-  console.log(email, password);
   const existingUser = await User.findOne({ email });
-  console.log(existingUser);
   if (existingUser) {
     throw new ErrorResponse(400, "User with this email already exists.");
   }
@@ -36,11 +34,7 @@ const signup = AsyncWrap(async (req: Request, res: Response) => {
 });
 
 const signin = AsyncWrap(async (req: Request, res: Response) => {
-  const { email, password, username } = req.body as {
-    email?: string;
-    password?: string;
-    username?: string;
-  };
+  const { email, password, username } = req.body as SignInRequestBody;
 
   if (!password || !(email || username)) {
     throw new ErrorResponse(400, "Email/Username and password are required.");

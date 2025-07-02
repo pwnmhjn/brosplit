@@ -1,4 +1,4 @@
-import { UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
+import { UploadApiResponse } from "cloudinary";
 import fs from "fs";
 import { cloudinary } from "../config/cloudinary.config";
 

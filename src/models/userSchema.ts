@@ -5,7 +5,7 @@ export interface IUser extends Document {
   _id: Types.ObjectId;
   email: string;
   password: string;
-  username: String;
+  username: string;
   refreshToken?: string;
   isPasswordCorrect(password: string): Promise<boolean>;
   generateRefreshToken(): string;
