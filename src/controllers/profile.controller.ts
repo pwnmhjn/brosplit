@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response  } from 'express';
 import { AsyncWrap } from '../utils/AsyncWrap';
 import { checkReqBody } from '../utils/checkReqBody';
 import { ErrorResponse } from '../utils/ErrorResponse';
@@ -15,6 +15,7 @@ const createProfile = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     const { firstname, lastname, contact, bio, gender, currency, location } =
       req.body as CreateProfileRequestBody;
+      console.log(req.body)
     const { isThere, missingKey } = checkReqBody({
       firstname,
       lastname,
