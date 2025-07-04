@@ -7,8 +7,7 @@ export const destroyCloudinaryUrl = async (obj: {
 }): Promise<boolean> => {
   if (obj === null) return false;
   try {
-    const result = await cloudinary.uploader.destroy(obj.url);
-    console.log(result);
+    await cloudinary.uploader.destroy(obj.url);
     return true;
   } catch {
     throw new ErrorResponse(

@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction } from 'express';
 import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger/swagger';
@@ -19,8 +19,11 @@ app.get('/', (_, res) => {
 app.use('/api/v1/auth/users', authRouter);
 app.use('/api/v1/profile', profileRouter);
 
-app.use((err: ErrorResponse, req: Request, res: Response) => {
-  const { statusCode = 500, message } = err;
-  res.status(statusCode).json(new ErrorResponse(statusCode, message));
-});
+app.use(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (err: ErrorResponse, req: Request, res: Response, next: NextFunction) => {
+    const { statusCode = 500, message } = err;
+    res.status(statusCode).json(new ErrorResponse(statusCode, message));
+  }
+);
 export { app };

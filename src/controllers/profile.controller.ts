@@ -120,11 +120,10 @@ const updateProfile = AsyncWrap(
         throw new ErrorResponse(401, 'Could not Create Profile');
       }
       if (updatedProfile && old_public_id) {
-        const isDestroyed = await destroyCloudinaryUrl({
+        await destroyCloudinaryUrl({
           url: old_public_id,
           type: 'update',
         });
-        console.log(isDestroyed);
       }
       res
         .status(200)
@@ -140,5 +139,49 @@ const updateProfile = AsyncWrap(
     }
   }
 );
+const getProfiles = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?._id;
+    if (!userId) {
+      throw new ErrorResponse(400, 'User is Not Authenticated');
+    }
+    try {
+      const profiles = await Profile.find();
+      res
+        .status(200)
+        .json(
+          new SuccessResponse(200, profiles, 'Fetching profile Successfully')
+        );
+    } catch {
+      throw new ErrorResponse(400, 'Cloud not find Profiles');
+    }
+  }
+);
+const destroyProfile = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(401, 'User not authenticated');
+    }
+    const userId = req.user._id;
 
-export { createProfile, updateProfile };
+    try {
+      const deletedProfile = await Profile.findOneAndDelete({ user: userId });
+      let publicIdForDelete;
+      if (deletedProfile?.avatar) {
+        publicIdForDelete = extractPublicIdFromURL(deletedProfile?.avatar);
+      }
+      if (deletedProfile && publicIdForDelete) {
+        await destroyCloudinaryUrl({
+          url: publicIdForDelete,
+          type: 'update',
+        });
+      }
+      res
+        .status(200)
+        .json(new SuccessResponse(200, deletedProfile, 'Profile got Deleted'));
+    } catch {
+      throw new ErrorResponse(400, 'Unable to Delete Profile');
+    }
+  }
+);
+export { createProfile, updateProfile, getProfiles, destroyProfile };

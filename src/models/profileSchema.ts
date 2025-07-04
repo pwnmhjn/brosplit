@@ -1,4 +1,6 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema } from 'mongoose';
+import { User } from './userSchema';
+import { ErrorResponse } from '../utils/ErrorResponse';
 
 const profileSchema = new mongoose.Schema(
   {
@@ -14,13 +16,13 @@ const profileSchema = new mongoose.Schema(
     },
     user: {
       type: Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "UserId is Required In Profile"],
+      ref: 'User',
+      required: [true, 'UserId is Required In Profile'],
     },
     avatar: {
       type: String,
       default:
-        "https://cdn.vectorstock.com/i/2000v/51/99/user-avatar-icon-flat-style-vector-3125199.avif",
+        'https://cdn.vectorstock.com/i/2000v/51/99/user-avatar-icon-flat-style-vector-3125199.avif',
       required: false,
     },
     contact: {
@@ -33,15 +35,15 @@ const profileSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      enum: ["male", "female", "other"],
+      enum: ['male', 'female', 'other'],
       lowercase: true,
       trim: true,
       required: false,
     },
     currency: {
       type: String,
-      enum: ["inr", "usd", "eur", "rub", "cny", "gbp"],
-      default: "inr",
+      enum: ['inr', 'usd', 'eur', 'rub', 'cny', 'gbp'],
+      default: 'inr',
     },
     location: {
       type: String,
@@ -50,4 +52,16 @@ const profileSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-export const Profile = mongoose.model("Profile", profileSchema);
+
+profileSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const profile = await this.model.findOne(this.getQuery());
+    if (profile && profile.user) {
+      await User.findByIdAndDelete(profile.user);
+    }
+    next();
+  } catch {
+    next(new ErrorResponse(400, 'cloud delete User Associate with Profile'));
+  }
+});
+export const Profile = mongoose.model('Profile', profileSchema);

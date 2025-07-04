@@ -6,15 +6,14 @@ class ErrorResponse extends Error {
 
   constructor(
     statusCode: number,
-    message = "Something Went Wrong",
+    message = 'Something Went Wrong',
     errors: undefined[] = [],
-    stack = ""
+    stack = ''
   ) {
     super();
-
     this.statusCode = statusCode;
     this.errors = errors;
-    this.message = message
+    this.message = message;
     this.data = null;
     this.success = false;
     if (stack) {
