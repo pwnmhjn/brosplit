@@ -1,5 +1,5 @@
-import { Request } from "express";
-import { IUser } from "../models/userSchema";
+import { Request } from 'express';
+import { IUser } from '../models/userSchema';
 
 export interface AuthenticatedRequest extends Request {
   user?: IUser;
@@ -11,8 +11,18 @@ export interface CreateProfileRequestBody {
   lastname: string;
   contact: string;
   bio?: string;
-  gender: "male" | "female" | "other";
+  gender: 'male' | 'female' | 'other';
   currency?: string;
   location?: string;
-  avatar?: File;
+  avatar?: File | string;
+}
+export interface UpdateProfileRequestBody {
+  firstname?: string;
+  lastname?: string;
+  contact?: string;
+  bio?: string;
+  gender?: 'male' | 'female' | 'other';
+  currency?: string;
+  location?: string;
+  avatar?: File | string;
 }
