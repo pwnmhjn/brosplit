@@ -44,7 +44,7 @@ const createProfile = AsyncWrap(
       if (avatarPath) {
         cloudinaryAvatar = await uploadOnCloudinary(avatarPath);
       }
-      const userforDb: Partial<CreateProfileRequestBody> & {
+      const userForDb: Partial<CreateProfileRequestBody> & {
         user: typeof user._id;
       } = {
         firstname,
@@ -53,10 +53,10 @@ const createProfile = AsyncWrap(
         gender,
         user: user?._id,
       };
-      if (bio !== undefined) userforDb.bio = bio;
-      if (currency !== undefined) userforDb.currency = currency;
-      if (location !== undefined) userforDb.location = location;
-      const profile = await Profile.create(userforDb);
+      if (bio !== undefined) userForDb.bio = bio;
+      if (currency !== undefined) userForDb.currency = currency;
+      if (location !== undefined) userForDb.location = location;
+      const profile = await Profile.create(userForDb);
       if (!profile) {
         throw new ErrorResponse(400, 'Could not Create Profile');
       }
@@ -92,11 +92,11 @@ const updateProfile = AsyncWrap(
         old_public_id = extractPublicIdFromURL(existingProfile?.avatar);
       }
 
-      const avatarpath = req.file?.path;
+      const avatarPath = req.file?.path;
       let cloudinaryAvatar;
-      if (avatarpath) {
+      if (avatarPath) {
         try {
-          cloudinaryAvatar = await uploadOnCloudinary(avatarpath);
+          cloudinaryAvatar = await uploadOnCloudinary(avatarPath);
         } catch {
           throw new ErrorResponse(400, 'Could not upload profile');
         }

@@ -12,7 +12,7 @@ export const destroyCloudinaryUrl = async (obj: {
   } catch {
     throw new ErrorResponse(
       400,
-      'Cloudnt destroy avatar after profile creation fail'
+      'could not destroy avatar after profile creation fail'
     );
   }
 };

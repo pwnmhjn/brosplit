@@ -3,6 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger/swagger';
 import authRouter from './routes/auth.routes';
+import groupRouter from './routes/group.routes';
 import profileRouter from './routes/profile.routes';
 import { Request, Response } from 'express';
 import { ErrorResponse } from './utils/ErrorResponse';
@@ -18,6 +19,7 @@ app.get('/', (_, res) => {
 
 app.use('/api/v1/auth/users', authRouter);
 app.use('/api/v1/profile', profileRouter);
+app.use('/api/v1/group', groupRouter);
 
 app.use(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
