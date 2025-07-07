@@ -1,12 +1,20 @@
 import { verifyJwt } from './../middlewares/auth.middleware';
 import { Router } from 'express';
 
-import { signin, signout, signup } from '../controllers/auth.controller';
+import {
+  fetchCurrentUser,
+  fetchUsers,
+  signIn,
+  signOut,
+  signUp,
+} from '../controllers/auth.controller';
 
 const router = Router();
 
-router.route('/sign-up').post(signup);
-router.route('/sign-in').post(signin);
-router.route('/sign-out').get(verifyJwt, signout);
+router.route('/sign-up').post(signUp);
+router.route('/sign-in').post(signIn);
+router.route('/sign-out').get(verifyJwt, signOut);
+router.route('/').get(verifyJwt, fetchUsers);
+router.route('/current-user').get(verifyJwt, fetchCurrentUser);
 
 export default router;

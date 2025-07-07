@@ -6,8 +6,9 @@ import { SuccessResponse } from '../utils/SuccessResponse';
 import generateRefreshAndAccess from '../utils/generateRefreshAndAccess';
 import { SignInRequestBody, SignUpRequestBody } from '../types/user';
 import generateUsername from '../utils/generateUsername';
+import { AuthenticatedRequest } from '../types/profile';
 
-const signup = AsyncWrap(async (req: Request, res: Response) => {
+const signUp = AsyncWrap(async (req: Request, res: Response) => {
   const { email, password } = req.body as SignUpRequestBody;
 
   if ([email, password].some((field) => field?.trim() === ' ')) {
@@ -35,8 +36,7 @@ const signup = AsyncWrap(async (req: Request, res: Response) => {
       )
     );
 });
-
-const signin = AsyncWrap(async (req: Request, res: Response) => {
+const signIn = AsyncWrap(async (req: Request, res: Response) => {
   const { email, password, username } = req.body as SignInRequestBody;
 
   if (!password || !(email || username)) {
@@ -82,8 +82,7 @@ const signin = AsyncWrap(async (req: Request, res: Response) => {
       )
     );
 });
-
-const signout = AsyncWrap(async (req: Request, res: Response) => {
+const signOut = AsyncWrap(async (req: Request, res: Response) => {
   if (!req.user) {
     throw new ErrorResponse(400, 'User is not Authenticated');
   }
@@ -108,5 +107,37 @@ const signout = AsyncWrap(async (req: Request, res: Response) => {
     .clearCookie('refreshToken', option)
     .json(new SuccessResponse(200, null, 'User LogOut'));
 });
+const fetchUsers = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, `User is Not Authenticated`);
+    }
+    const users = await User.find().select('-password -refreshToken');
+    if (!users) {
+      throw new ErrorResponse(400, 'Could not find User');
+    }
+    res
+      .status(200)
+      .json(new SuccessResponse(200, { users }, 'users fetched Successful'));
+  }
+);
+const fetchCurrentUser = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, `User is Not Authenticated`);
+    }
+    const user = await User.findById(req.user._id).select(
+      '-refreshToken -password'
+    );
+    if (!user) {
+      throw new ErrorResponse(400, 'Could not find User');
+    }
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, { user }, 'Current users fetched Successful')
+      );
+  }
+);
 
-export { signup, signin ,signout };
+export { signUp, signIn, signOut, fetchUsers, fetchCurrentUser };
