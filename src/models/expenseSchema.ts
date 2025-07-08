@@ -1,4 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
+import { ErrorResponse } from '../utils/ErrorResponse';
+import { ExpenseSplit } from './expenseSplitSchema';
 
 const expenseSchema = new Schema(
   {
@@ -31,5 +33,22 @@ const expenseSchema = new Schema(
   },
   { timestamps: true }
 );
+
+expenseSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const expense = await this.model.findOne(this.getFilter());
+    if (expense) {
+      await ExpenseSplit.deleteMany({ expenseId: expense._id });
+    }
+    next();
+  } catch {
+    next(
+      new ErrorResponse(
+        400,
+        'could not delete member which are added in the group'
+      )
+    );
+  }
+});
 
 export const Expense = mongoose.model('Expense', expenseSchema);

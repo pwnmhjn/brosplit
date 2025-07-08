@@ -4,10 +4,13 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './swagger/swagger';
 import authRouter from './routes/auth.routes';
 import groupRouter from './routes/group.routes';
+import memberRouter from './routes/member.routes';
+import expenseRouter from './routes/expense.routes';
+import settlementRouter from './routes/settlement.routes';
 import profileRouter from './routes/profile.routes';
 import { Request, Response } from 'express';
-import { ErrorResponse } from './utils/ErrorResponse'
-import cookieParser from "cookie-parser";
+import { ErrorResponse } from './utils/ErrorResponse';
+import cookieParser from 'cookie-parser';
 const app = express();
 
 app.use(cors());
@@ -21,6 +24,9 @@ app.get('/', (_, res) => {
 app.use('/api/v1/auth/users', authRouter);
 app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/group', groupRouter);
+app.use('/api/v1/group', memberRouter);
+app.use('/api/v1/group', settlementRouter);
+app.use('/api/v1/expense', expenseRouter);
 
 app.use(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
