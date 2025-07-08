@@ -6,12 +6,13 @@ import authRouter from './routes/auth.routes';
 import groupRouter from './routes/group.routes';
 import profileRouter from './routes/profile.routes';
 import { Request, Response } from 'express';
-import { ErrorResponse } from './utils/ErrorResponse';
+import { ErrorResponse } from './utils/ErrorResponse'
+import cookieParser from "cookie-parser";
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+app.use(cookieParser());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/', (_, res) => {
   res.send('Welcome to BroSplit API!');

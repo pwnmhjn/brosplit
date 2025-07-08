@@ -4,6 +4,7 @@ import { Router } from 'express';
 import {
   fetchCurrentUser,
   fetchUsers,
+  getAccessToken,
   signIn,
   signOut,
   signUp,
@@ -16,5 +17,6 @@ router.route('/sign-in').post(signIn);
 router.route('/sign-out').get(verifyJwt, signOut);
 router.route('/').get(verifyJwt, fetchUsers);
 router.route('/current-user').get(verifyJwt, fetchCurrentUser);
+router.route('/get-Access').get(verifyJwt, getAccessToken);
 
 export default router;

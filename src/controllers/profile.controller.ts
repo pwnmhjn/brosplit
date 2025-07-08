@@ -44,6 +44,9 @@ const createProfile = AsyncWrap(
       if (avatarPath) {
         cloudinaryAvatar = await uploadOnCloudinary(avatarPath);
       }
+      if (!cloudinaryAvatar) {
+        throw new ErrorResponse(400, 'Could not upload avatar on Cloud');
+      }
       const userForDb: Partial<CreateProfileRequestBody> & {
         user: typeof user._id;
       } = {
@@ -56,6 +59,8 @@ const createProfile = AsyncWrap(
       if (bio !== undefined) userForDb.bio = bio;
       if (currency !== undefined) userForDb.currency = currency;
       if (location !== undefined) userForDb.location = location;
+      if (cloudinaryAvatar.url !== undefined)
+        userForDb.avatar = cloudinaryAvatar?.url;
       const profile = await Profile.create(userForDb);
       if (!profile) {
         throw new ErrorResponse(400, 'Could not Create Profile');
@@ -114,7 +119,7 @@ const updateProfile = AsyncWrap(
       const updatedProfile = await Profile.findOneAndUpdate(
         { user: userId },
         { $set: updatableDataForFilter },
-        { new: true }
+        { new: true, runValidators: true }
       );
       if (!updatedProfile) {
         throw new ErrorResponse(401, 'Could not Create Profile');

@@ -1,3 +1,4 @@
+import Jwt from 'jsonwebtoken';
 import { Request, Response } from 'express';
 import { AsyncWrap } from '../utils/AsyncWrap';
 import { ErrorResponse } from '../utils/ErrorResponse';
@@ -139,5 +140,55 @@ const fetchCurrentUser = AsyncWrap(
       );
   }
 );
+const getAccessToken = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    if (!refreshToken) {
+      throw new ErrorResponse(400, 'can not get Refresh Token');
+    }
 
-export { signUp, signIn, signOut, fetchUsers, fetchCurrentUser };
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+      throw new ErrorResponse(
+        500,
+        'Refresh token secret is not set in environment variables.'
+      );
+    }
+    const payload = Jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET as string
+    );
+    if (
+      !payload ||
+      typeof payload !== 'object' ||
+      !('_id' in payload) ||
+      !payload._id
+    ) {
+      throw new ErrorResponse(500, 'JWT Verify Error');
+    }
+    const user = await User.findById(payload._id).select(
+      '-password -refreshToken'
+    );
+    if (!user) {
+      throw new ErrorResponse(500, 'Cloud not Find User in DataBase');
+    }
+
+    const accessToken = await user.generateAccessToken();
+
+    res.json(
+      new SuccessResponse(
+        200,
+        { user, accessToken: accessToken },
+        'AccessToken Generated'
+      )
+    );
+  }
+);
+
+export {
+  signUp,
+  signIn,
+  signOut,
+  fetchUsers,
+  fetchCurrentUser,
+  getAccessToken,
+};

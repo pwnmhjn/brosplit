@@ -8,6 +8,7 @@ import { SuccessResponse } from '../utils/SuccessResponse';
 import { CreateGroupRequestBody, UpdateGroupRequestBody } from '../types/group';
 import { Member } from '../models/memberSchema';
 import { areYouAdmin } from '../services/groupService';
+import { Expense } from '../models/expenseSchema';
 
 const createGroup = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -194,6 +195,43 @@ const destroyGroupMember = AsyncWrap(
       .json(new SuccessResponse(200, { member }, 'Member Delete Successful'));
   }
 );
+const createExpense = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { group_id } = req.params;
+    if (!req.user) {
+      throw new ErrorResponse(400, 'User is not Authenticated');
+    }
+    const userId = req.user._id;
+    const { description, currency, amount, date } = req.body;
+    const { isThere, missingKey } = checkReqBody({
+      description,
+      currency,
+      amount,
+      date,
+    });
+    if (!isThere) {
+      throw new ErrorResponse(400, `Please Enter ${missingKey}`);
+    }
+
+    const expense = await Expense.create({
+      groupId: group_id,
+      createdBy: userId,
+      description,
+      amount,
+      currency,
+      date,
+    });
+
+    if (!expense) {
+      throw new ErrorResponse(400, 'Unable to create Expense');
+    }
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, { expense }, 'Expense Created Successfully')
+      );
+  }
+);
 export {
   createGroup,
   fetchGroups,
@@ -204,4 +242,5 @@ export {
   fetchGroupMembers,
   updateGroupMember,
   destroyGroupMember,
+  createExpense,
 };

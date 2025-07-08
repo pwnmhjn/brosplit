@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { verifyJwt } from '../middlewares/auth.middleware';
 import {
   addMember,
+  createExpense,
   createGroup,
   destroyGroup,
   destroyGroupMember,
@@ -26,5 +27,6 @@ router
 router
   .route('/:group_id/members/:member_id')
   .delete(verifyJwt, destroyGroupMember);
+router.route('/:group_id/expense').post(verifyJwt, createExpense);
 
 export default router;
