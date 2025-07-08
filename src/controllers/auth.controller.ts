@@ -83,7 +83,7 @@ const signIn = AsyncWrap(async (req: Request, res: Response) => {
       )
     );
 });
-const signOut = AsyncWrap(async (req: Request, res: Response) => {
+const signOut = AsyncWrap(async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
     throw new ErrorResponse(400, 'User is not Authenticated');
   }

@@ -5,11 +5,15 @@ import {
   createExpense,
   createGroup,
   destroyGroup,
+  destroyGroupExpense,
   destroyGroupMember,
   fetchGroupDetails,
+  fetchGroupExpense,
+  fetchGroupExpenseDetails,
   fetchGroupMembers,
   fetchGroups,
   updateGroup,
+  updateGroupExpense,
   updateGroupMember,
 } from '../controllers/group.controller';
 const router = Router();
@@ -28,5 +32,15 @@ router
   .route('/:group_id/members/:member_id')
   .delete(verifyJwt, destroyGroupMember);
 router.route('/:group_id/expense').post(verifyJwt, createExpense);
+router.route('/:group_id/expense').get(verifyJwt, fetchGroupExpense);
+router
+  .route('/:group_id/expense/:expense_id')
+  .get(verifyJwt, fetchGroupExpenseDetails);
+router
+  .route('/:group_id/expense/:expense_id')
+  .patch(verifyJwt, updateGroupExpense);
+router
+  .route('/:group_id/expense/:expense_id')
+  .delete(verifyJwt, destroyGroupExpense);
 
 export default router;

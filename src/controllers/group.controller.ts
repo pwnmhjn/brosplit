@@ -9,6 +9,11 @@ import { CreateGroupRequestBody, UpdateGroupRequestBody } from '../types/group';
 import { Member } from '../models/memberSchema';
 import { areYouAdmin } from '../services/groupService';
 import { Expense } from '../models/expenseSchema';
+import { AddMemberRequestBody } from '../types/member';
+import {
+  CreateExpenseRequestBody,
+  UpdateExpenseRequestBody,
+} from '../types/expense';
 
 const createGroup = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -98,7 +103,7 @@ const updateGroup = AsyncWrap(
 );
 const addMember = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { role, userId } = req.body;
+    const { role, userId } = req.body as AddMemberRequestBody;
     const group_id = req.params.group_id;
     if (!req.user) {
       throw new ErrorResponse(200, 'User is not Authenticated');
@@ -202,7 +207,8 @@ const createExpense = AsyncWrap(
       throw new ErrorResponse(400, 'User is not Authenticated');
     }
     const userId = req.user._id;
-    const { description, currency, amount, date } = req.body;
+    const { description, currency, amount, date } =
+      req.body as CreateExpenseRequestBody;
     const { isThere, missingKey } = checkReqBody({
       description,
       currency,
@@ -232,6 +238,84 @@ const createExpense = AsyncWrap(
       );
   }
 );
+const fetchGroupExpense = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, 'User is not Authenticated');
+    }
+    const { group_id } = req.params;
+    const expenses = await Expense.find({ groupId: group_id });
+    if (!expenses) {
+      throw new ErrorResponse(400, 'could not find Expenses');
+    }
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, { expenses }, 'Expense Fetched Successfully')
+      );
+  }
+);
+const fetchGroupExpenseDetails = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, 'User is not Authenticated');
+    }
+    const { group_id, expense_id } = req.params;
+    const expense = await Expense.find({ groupId: group_id, _id: expense_id });
+    if (!expense) {
+      throw new ErrorResponse(400, 'Could not find Expense');
+    }
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, { expense }, 'Expense Fetched Successfully')
+      );
+  }
+);
+const updateGroupExpense = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, 'User is not Authenticated');
+    }
+    const { expense_id, group_id } = req.params;
+    const { description, amount } = req.body as UpdateExpenseRequestBody;
+
+    const expenseData: UpdateExpenseRequestBody = {};
+    if (description !== undefined) expenseData.description = description;
+    if (amount !== undefined) expenseData.amount = amount;
+    const expense = await Expense.findOneAndUpdate(
+      {
+        _id: expense_id,
+        groupId: group_id,
+      },
+      expenseData,
+      { new: true }
+    );
+    if (!expense) {
+      throw new ErrorResponse(400, 'Unable to update Expense');
+    }
+    res
+      .status(200)
+      .json(new SuccessResponse(200, { expense }, 'Expense Update Successful'));
+  }
+);
+const destroyGroupExpense = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(400, 'User is not Authenticated');
+    }
+    const { group_id, expense_id } = req.params;
+    const expense = await Expense.findOneAndDelete({
+      groupId: group_id,
+      _id: expense_id,
+    });
+    res
+      .status(200)
+      .json(
+        new SuccessResponse(200, { expense }, 'Expense Deleted Successfully')
+      );
+  }
+);
 export {
   createGroup,
   fetchGroups,
@@ -243,4 +327,8 @@ export {
   updateGroupMember,
   destroyGroupMember,
   createExpense,
+  fetchGroupExpense,
+  fetchGroupExpenseDetails,
+  updateGroupExpense,
+  destroyGroupExpense,
 };
