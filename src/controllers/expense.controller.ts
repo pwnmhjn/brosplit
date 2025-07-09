@@ -11,7 +11,7 @@ const fetchExpenseSplit = AsyncWrap(
     const expenseSplits = await ExpenseSplit.find({ expenseId: expense_id });
 
     if (!expenseSplits) {
-      throw new ErrorResponse(400, 'Unable to find Spits of Expenses');
+      throw new ErrorResponse(404, 'Unable to find Spits of Expenses');
     }
     const totalAmount = expenseSplits.reduce(
       (sum, split) => Number(sum) + Number(split.amountOwed),
@@ -46,7 +46,7 @@ const updateExpenseSplit = AsyncWrap(
       { new: true }
     );
     if (!expenseSplit) {
-      throw new ErrorResponse(400, 'Unable to update Expense Split');
+      throw new ErrorResponse(404, 'Unable to update Expense Split');
     }
     res
       .status(200)

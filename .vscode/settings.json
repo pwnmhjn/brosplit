@@ -3,5 +3,6 @@
         "brosplit",
         "firstname",
         "lastname"
-    ]
+    ],
+    "postman.settings.dotenv-detection-notification-visibility": false
 }

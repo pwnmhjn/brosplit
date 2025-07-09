@@ -19,7 +19,7 @@ const signUp = AsyncWrap(async (req: Request, res: Response) => {
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new ErrorResponse(400, 'User with this email already exists.');
+    throw new ErrorResponse(409, 'User with this email already exists.');
   }
   const user = await User.create({ email, password, username });
 
@@ -52,12 +52,12 @@ const signIn = AsyncWrap(async (req: Request, res: Response) => {
 
   const user = await User.findOne({ $or: orQuery });
   if (!user) {
-    throw new ErrorResponse(400, 'User not found.');
+    throw new ErrorResponse(404, 'User not found.');
   }
 
   const isPasswordCorrect = await user.isPasswordCorrect(password);
   if (!isPasswordCorrect) {
-    throw new ErrorResponse(400, 'Password is incorrect.');
+    throw new ErrorResponse(401, 'Password is incorrect.');
   }
 
   const { accessToken, refreshToken } = await generateRefreshAndAccess(
@@ -85,7 +85,7 @@ const signIn = AsyncWrap(async (req: Request, res: Response) => {
 });
 const signOut = AsyncWrap(async (req: AuthenticatedRequest, res: Response) => {
   if (!req.user) {
-    throw new ErrorResponse(400, 'User is not Authenticated');
+    throw new ErrorResponse(401, 'User is not Authenticated');
   }
   const userId = req.user._id;
   await User.findByIdAndUpdate(
@@ -111,11 +111,11 @@ const signOut = AsyncWrap(async (req: AuthenticatedRequest, res: Response) => {
 const fetchUsers = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user) {
-      throw new ErrorResponse(400, `User is Not Authenticated`);
+      throw new ErrorResponse(401, `User is Not Authenticated`);
     }
     const users = await User.find().select('-password -refreshToken');
     if (!users) {
-      throw new ErrorResponse(400, 'Could not find User');
+      throw new ErrorResponse(404, 'Could not find User');
     }
     res
       .status(200)
@@ -125,13 +125,13 @@ const fetchUsers = AsyncWrap(
 const fetchCurrentUser = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user) {
-      throw new ErrorResponse(400, `User is Not Authenticated`);
+      throw new ErrorResponse(401, `User is Not Authenticated`);
     }
     const user = await User.findById(req.user._id).select(
       '-refreshToken -password'
     );
     if (!user) {
-      throw new ErrorResponse(400, 'Could not find User');
+      throw new ErrorResponse(404, 'Could not find User');
     }
     res
       .status(200)
@@ -144,7 +144,7 @@ const getAccessToken = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if (!refreshToken) {
-      throw new ErrorResponse(400, 'can not get Refresh Token');
+      throw new ErrorResponse(401, 'can not get Refresh Token');
     }
 
     if (!process.env.REFRESH_TOKEN_SECRET) {
@@ -169,7 +169,7 @@ const getAccessToken = AsyncWrap(
       '-password -refreshToken'
     );
     if (!user) {
-      throw new ErrorResponse(500, 'Cloud not Find User in DataBase');
+      throw new ErrorResponse(404, 'Cloud not Find User in DataBase');
     }
 
     const accessToken = await user.generateAccessToken();

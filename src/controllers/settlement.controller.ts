@@ -10,7 +10,7 @@ import { SuccessResponse } from '../utils/SuccessResponse';
 const createSettlement = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     if (!req.user) {
-      throw new ErrorResponse(200, 'User is not Authenticated');
+      throw new ErrorResponse(401, 'User is not Authenticated');
     }
     const { group_id } = req.params;
     const { toUserId, note, amount, date } =
@@ -29,7 +29,7 @@ const createSettlement = AsyncWrap(
     if (date !== undefined) settlementData.date = date;
     const settlement = await Settlement.create(settlementData);
     if (!settlement) {
-      throw new ErrorResponse(400, 'Unable to Create Settlement');
+      throw new ErrorResponse(500, 'Unable to Create Settlement');
     }
     res
       .status(201)

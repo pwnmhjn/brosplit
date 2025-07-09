@@ -31,7 +31,7 @@ const createProfile = AsyncWrap(
     try {
       const user = req.user;
       if (!user) {
-        throw new ErrorResponse(400, 'User is Not Authenticated');
+        throw new ErrorResponse(401, 'User is Not Authenticated');
       }
       const avatarPath = req.file?.path;
       const existingProfile = await Profile.findOne({
@@ -39,13 +39,13 @@ const createProfile = AsyncWrap(
         firstname: firstname,
       });
       if (existingProfile) {
-        throw new ErrorResponse(400, 'User Already Exist');
+        throw new ErrorResponse(409, 'User Already Exist');
       }
       if (avatarPath) {
         cloudinaryAvatar = await uploadOnCloudinary(avatarPath);
       }
       if (!cloudinaryAvatar) {
-        throw new ErrorResponse(400, 'Could not upload avatar on Cloud');
+        throw new ErrorResponse(500, 'Could not upload avatar on Cloud');
       }
       const userForDb: Partial<CreateProfileRequestBody> & {
         user: typeof user._id;
@@ -63,7 +63,7 @@ const createProfile = AsyncWrap(
         userForDb.avatar = cloudinaryAvatar?.url;
       const profile = await Profile.create(userForDb);
       if (!profile) {
-        throw new ErrorResponse(400, 'Could not Create Profile');
+        throw new ErrorResponse(500, 'Could not Create Profile');
       }
       res
         .status(200)
@@ -103,7 +103,7 @@ const updateProfile = AsyncWrap(
         try {
           cloudinaryAvatar = await uploadOnCloudinary(avatarPath);
         } catch {
-          throw new ErrorResponse(400, 'Could not upload profile');
+          throw new ErrorResponse(500, 'Could not upload profile');
         }
       }
       const updatableDataForFilter: UpdateProfileRequestBody = {};
@@ -122,7 +122,7 @@ const updateProfile = AsyncWrap(
         { new: true, runValidators: true }
       );
       if (!updatedProfile) {
-        throw new ErrorResponse(401, 'Could not Create Profile');
+        throw new ErrorResponse(500, 'Could not Create Profile');
       }
       if (updatedProfile && old_public_id) {
         await destroyCloudinaryUrl({
@@ -148,7 +148,7 @@ const getProfiles = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user?._id;
     if (!userId) {
-      throw new ErrorResponse(400, 'User is Not Authenticated');
+      throw new ErrorResponse(401, 'User is Not Authenticated');
     }
     try {
       const profiles = await Profile.find();
@@ -158,7 +158,7 @@ const getProfiles = AsyncWrap(
           new SuccessResponse(200, profiles, 'Fetching profile Successfully')
         );
     } catch {
-      throw new ErrorResponse(400, 'Cloud not find Profiles');
+      throw new ErrorResponse(500, 'Cloud not find Profiles');
     }
   }
 );
@@ -185,7 +185,7 @@ const destroyProfile = AsyncWrap(
         .status(200)
         .json(new SuccessResponse(200, deletedProfile, 'Profile got Deleted'));
     } catch {
-      throw new ErrorResponse(400, 'Unable to Delete Profile');
+      throw new ErrorResponse(500, 'Unable to Delete Profile');
     }
   }
 );
