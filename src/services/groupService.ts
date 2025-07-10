@@ -53,3 +53,22 @@ export const splitAmountBetweenGroupMembers = (args: {
   });
   return splitData;
 };
+export const addRoleInFetchGroupResponse = (
+  members: {
+    groupId: Types.ObjectId;
+    _id: Types.ObjectId;
+    role: string;
+  }[],
+  groups: { _id: Types.ObjectId; name: string }[]
+): { _id: Types.ObjectId; name: string; role: string }[] => {
+  const roleByGroupId: Record<string, string> = {};
+  members.map((m) => {
+    roleByGroupId[m.groupId.toString()] = m.role;
+  });
+  const groupWithRole = groups.map((group) => ({
+    _id: group._id,
+    name: group.name,
+    role: roleByGroupId[group._id.toString()],
+  }));
+  return groupWithRole;
+};

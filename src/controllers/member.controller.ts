@@ -32,7 +32,7 @@ const addMember = AsyncWrap(
       );
     }
     const exitingMember = await Member.find({ groupId: group_id, userId });
-    if (exitingMember) {
+    if (exitingMember.length > 0) {
       throw new ErrorResponse(409, 'Member is Already Added in This Group');
     }
     const member = await Member.create({
@@ -120,7 +120,7 @@ const destroyGroupMember = AsyncWrap(
       groupId: group_id,
     });
     if (!isAdmin) {
-      throw new ErrorResponse(403, `Only Admin can Update Members`);
+      throw new ErrorResponse(403, `Only Admin can Delete Members`);
     }
     const member = await Member.findByIdAndDelete(member_id);
     if (!member) {

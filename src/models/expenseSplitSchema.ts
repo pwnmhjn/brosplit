@@ -33,13 +33,18 @@ expenseSplitSchema.post(
     if (!expenseId) next();
     try {
       const splits = await this.model.find({ expenseId });
+
       const newAmount = splits.reduce(
         (sum, split) => Number(sum) + Number(split.amountOwed),
         0
       );
-      const expense = await Expense.findByIdAndUpdate(expenseId, {
-        amount: newAmount,
-      });
+      const expense = await Expense.findByIdAndUpdate(
+        expenseId,
+        {
+          amount: newAmount,
+        },
+        { skipSplitUpdate: true }
+      );
       if (!expense) {
         throw new ErrorResponse(
           200,

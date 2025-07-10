@@ -37,7 +37,6 @@ groupSchema.post('save', async (doc, next) => {
     next(new ErrorResponse(400, 'Member Creation Failed'));
   }
 });
-
 groupSchema.pre('findOneAndDelete', async function (next) {
   try {
     const group = await this.model.findOne(this.getFilter());

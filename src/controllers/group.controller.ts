@@ -7,7 +7,10 @@ import { ErrorResponse } from '../utils/ErrorResponse';
 import { SuccessResponse } from '../utils/SuccessResponse';
 import { CreateGroupRequestBody, UpdateGroupRequestBody } from '../types/group';
 import { Member } from '../models/memberSchema';
-import { splitAmountBetweenGroupMembers } from '../services/groupService';
+import {
+  addRoleInFetchGroupResponse,
+  splitAmountBetweenGroupMembers,
+} from '../services/groupService';
 import { Expense } from '../models/expenseSchema';
 import {
   CreateExpenseRequestBody,
@@ -43,11 +46,22 @@ const fetchGroups = AsyncWrap(
     if (!req.user) {
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
-    const groups = await Group.find();
-    if (!groups) {
+    const IAmAsAMemberOrAdmin = await Member.find({
+      userId: req.user._id,
+    }).select('groupId role');
+
+    const groupIds = IAmAsAMemberOrAdmin.map((member) => member.groupId);
+    const groups = await Group.find({ _id: { $in: groupIds } }).select(
+      '_id name'
+    );
+    if (groups.length < 1) {
       throw new ErrorResponse(404, 'could not find groups');
     }
-    res.status(200).json(new SuccessResponse(200, { groups }));
+    const groupWithRole = addRoleInFetchGroupResponse(
+      IAmAsAMemberOrAdmin,
+      groups
+    );
+    res.status(200).json(new SuccessResponse(200, { groups: groupWithRole }));
   }
 );
 const fetchGroupDetails = AsyncWrap(
@@ -56,11 +70,24 @@ const fetchGroupDetails = AsyncWrap(
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
     const group_id = req.params.group_id;
-    const group = await Group.findById(group_id);
+    const IAmAsAMemberOrAdmin = await Member.findOne({
+      userId: req.user._id,
+      groupId: group_id,
+    }).select('groupId');
+    const group = await Group.findOne({
+      _id: IAmAsAMemberOrAdmin?.groupId,
+    });
     if (!group) {
       throw new ErrorResponse(404, 'could not find group');
     }
-    res.status(200).json(new SuccessResponse(200, { group }));
+    const groupWithRole = {
+      ...group.toObject(),
+      role:
+        group.createdBy.toString() === req.user._id.toString()
+          ? 'Admin'
+          : 'Member',
+    };
+    res.status(200).json(new SuccessResponse(200, { group: groupWithRole }));
   }
 );
 const destroyGroup = AsyncWrap(
@@ -69,9 +96,12 @@ const destroyGroup = AsyncWrap(
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
     const group_id = req.params.group_id;
-    const group = await Group.findByIdAndDelete(group_id);
-    if (!group) {
-      throw new ErrorResponse(404, 'could not delete group');
+    const group = await Group.findOneAndDelete({
+      _id: group_id,
+      createdBy: req.user._id,
+    });
+    if (!group || group.createdBy === req.user._id) {
+      throw new ErrorResponse(404, 'You have no Access to Delete This group');
     }
     res
       .status(200)
@@ -88,8 +118,15 @@ const updateGroup = AsyncWrap(
     const updateGroupData: UpdateGroupRequestBody = {};
     if (name !== undefined) updateGroupData.name = name;
     if (description !== undefined) updateGroupData.description = description;
-    const group = await Group.findByIdAndUpdate(
-      { _id: group_id },
+    const isThereGroup = await Group.findOne({
+      _id: group_id,
+      createdBy: req.user._id,
+    });
+    if (!isThereGroup) {
+      throw new ErrorResponse(403, 'You have no Access to update this group');
+    }
+    const group = await Group.findOneAndUpdate(
+      { _id: group_id, createdBy: req.user._id },
       { $set: updateGroupData },
       { new: true }
     );
@@ -118,6 +155,16 @@ const createExpense = AsyncWrap(
     });
     if (!isThere) {
       throw new ErrorResponse(400, `Please Enter ${missingKey}`);
+    }
+    const isMember = await Member.findOne({
+      userId: req.user._id,
+      groupId: group_id,
+    });
+    if (!isMember) {
+      throw new ErrorResponse(
+        403,
+        'You are not part of this group to create Expense'
+      );
     }
     const members = await Member.find({ groupId: group_id });
     if (!members) {
@@ -163,7 +210,21 @@ const fetchGroupExpense = AsyncWrap(
       throw new ErrorResponse(402, 'User is not Authenticated');
     }
     const { group_id } = req.params;
-    const expenses = await Expense.find({ groupId: group_id });
+    const members = await Member.find({ groupId: group_id }).select(
+      'userId -_id'
+    );
+    const userIds = members.map((m) => m.userId.toString());
+    const isMember = userIds.includes(req.user._id.toString());
+    if (!isMember) {
+      throw new ErrorResponse(
+        403,
+        'You have no Access to Fetch Expense from this Group'
+      );
+    }
+
+    const expenses = await Expense.find({ groupId: group_id }).select(
+      'description amount'
+    );
     if (!expenses) {
       throw new ErrorResponse(404, 'could not find Expenses');
     }
@@ -180,7 +241,23 @@ const fetchGroupExpenseDetails = AsyncWrap(
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
     const { group_id, expense_id } = req.params;
-    const expense = await Expense.find({ groupId: group_id, _id: expense_id });
+
+    const members = await Member.find({ groupId: group_id }).select(
+      'userId -_id'
+    );
+    const userIds = members.map((m) => m.userId.toString());
+    const isMember = userIds.includes(req.user._id.toString());
+    if (!isMember) {
+      throw new ErrorResponse(
+        403,
+        'You have no Access to Fetch Expense Details from this Group'
+      );
+    }
+
+    const expense = await Expense.findOne({
+      groupId: group_id,
+      _id: expense_id,
+    });
     if (!expense) {
       throw new ErrorResponse(404, 'Could not find Expense');
     }
@@ -193,12 +270,19 @@ const fetchGroupExpenseDetails = AsyncWrap(
 );
 const updateGroupExpense = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
+    const { expense_id, group_id } = req.params;
+    const { description, amount } = req.body as UpdateExpenseRequestBody;
     if (!req.user) {
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
-    const { expense_id, group_id } = req.params;
-    const { description, amount } = req.body as UpdateExpenseRequestBody;
-
+    const members = await Member.find({ groupId: group_id }).select(
+      'userId -_id'
+    );
+    const userIds = members.map((m) => m.userId.toString());
+    const isMember = userIds.includes(req.user._id.toString());
+    if (!isMember) {
+      throw new ErrorResponse(403, 'You have no Access to Update this Expense');
+    }
     const expenseData: UpdateExpenseRequestBody = {};
     if (description !== undefined) expenseData.description = description;
     if (amount !== undefined) expenseData.amount = amount;
@@ -224,9 +308,21 @@ const destroyGroupExpense = AsyncWrap(
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
     const { group_id, expense_id } = req.params;
+    const existingExpense = await Expense.findOne({
+      groupId: group_id,
+      _id: expense_id,
+      createdBy: req.user._id,
+    });
+    if (!existingExpense) {
+      throw new ErrorResponse(
+        403,
+        'You do not have Access To Delete this Expense'
+      );
+    }
     const expense = await Expense.findOneAndDelete({
       groupId: group_id,
       _id: expense_id,
+      createdBy: req.user._id,
     });
     if (!expense) {
       throw new ErrorResponse(404, 'Unable to Delete Expense');
