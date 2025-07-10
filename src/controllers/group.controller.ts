@@ -193,12 +193,16 @@ const createExpense = AsyncWrap(
     if (!expenseSplit) {
       throw new ErrorResponse(404, 'Unable to Split Expenses');
     }
+    const expenseSplitMinimal = expenseSplit.map((split) => ({
+      _id: split._id,
+      expenseId: split.expenseId,
+    }));
     res
       .status(200)
       .json(
         new SuccessResponse(
           200,
-          { expense, expenseSplit },
+          { expense, expenseSplit: expenseSplitMinimal },
           'Expense Created Successfully'
         )
       );
