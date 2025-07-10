@@ -8,6 +8,7 @@ import {
   fetchGroupDetails,
   fetchGroupExpense,
   fetchGroupExpenseDetails,
+  fetchGroupExpenseSplits,
   fetchGroups,
   updateGroup,
   updateGroupExpense,
@@ -30,5 +31,6 @@ router
 router
   .route('/:group_id/expense/:expense_id')
   .delete(verifyJwt, destroyGroupExpense);
+router.route('/:group_id/splits').get(verifyJwt, fetchGroupExpenseSplits);
 
 export default router;

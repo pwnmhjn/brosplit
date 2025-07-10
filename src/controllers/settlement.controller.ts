@@ -12,7 +12,7 @@ const createSettlement = AsyncWrap(
     if (!req.user) {
       throw new ErrorResponse(401, 'User is not Authenticated');
     }
-    const { group_id } = req.params;
+    const { group_id, expense_id } = req.params;
     const { toUserId, note, amount, date } =
       req.body as CreateSettlementReqBody;
     const { isThere, missingKey } = checkReqBody({ toUserId, amount });
@@ -21,6 +21,7 @@ const createSettlement = AsyncWrap(
     }
     const settlementData = {
       groupId: group_id,
+      expenseId: expense_id,
       fromUserId: req.user._id.toString(),
       amount: amount,
       toUserId: toUserId,

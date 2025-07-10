@@ -1,4 +1,3 @@
-import { Response } from 'express';
 import { Group } from '../models/groupSchema';
 import { AuthenticatedRequest } from '../types/profile';
 import { AsyncWrap } from '../utils/AsyncWrap';
@@ -17,6 +16,8 @@ import {
   UpdateExpenseRequestBody,
 } from '../types/expense';
 import { ExpenseSplit } from '../models/expenseSplitSchema';
+import { Response } from 'express';
+// import mongoose from 'mongoose';
 
 const createGroup = AsyncWrap(
   async (req: AuthenticatedRequest, res: Response) => {
@@ -226,16 +227,28 @@ const fetchGroupExpense = AsyncWrap(
       );
     }
 
-    const expenses = await Expense.find({ groupId: group_id }).select(
-      'description amount'
-    );
+    const expenses = await Expense.find({ groupId: group_id });
+    
+    const minimalExpenses = expenses.map((expense) => ({
+      _id: expense._id,
+      description: expense.description,
+      amount: expense.amount,
+      isCreator:
+        req.user && expense.createdBy?.toString() === req.user._id.toString()
+          ? true
+          : false,
+    }));
     if (!expenses) {
       throw new ErrorResponse(404, 'could not find Expenses');
     }
     res
       .status(200)
       .json(
-        new SuccessResponse(200, { expenses }, 'Expense Fetched Successfully')
+        new SuccessResponse(
+          200,
+          { expenses: minimalExpenses },
+          'Expense Fetched Successfully'
+        )
       );
   }
 );
@@ -338,6 +351,63 @@ const destroyGroupExpense = AsyncWrap(
       );
   }
 );
+const fetchGroupExpenseSplits = AsyncWrap(
+  async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user) {
+      throw new ErrorResponse(401, 'User is not Authenticated');
+    }
+    const { group_id } = req.params;
+    const isMember = await Member.find({ groupId: group_id });
+    if (!isMember || isMember.length < 0) {
+      throw new ErrorResponse(
+        403,
+        'You are not Part of this Group/Expense/Splits'
+      );
+    }
+    const expenses = await Expense.find({ groupId: group_id }).select('_id');
+    const expenseIds = expenses.map((expense) => expense._id);
+    const splits = await ExpenseSplit.find({
+      expenseId: { $in: expenseIds },
+    }).select('_id amountOwed isSettled userId');
+    if (!splits) {
+      throw new ErrorResponse(500, 'Splits not Found');
+    }
+    const settled = splits.filter((split) => split.isSettled === true);
+    const notSettled = splits.filter((split) => split.isSettled === false);
+    /*  const splitsAggregate = await Expense.aggregate([
+      { $match: { groupId: new mongoose.Types.ObjectId(group_id) } },
+      {
+        $lookup: {
+          from: 'expensesplits', // Collection name for splits
+          localField: '_id', // Expense _id
+          foreignField: 'expenseId', // Split's expenseId
+          as: 'splits',
+        },
+      },
+      { $unwind: '$splits' }, // Flatten the splits array
+      {
+        $replaceRoot: { newRoot: '$splits' }, // Use the split object as the root
+      },
+      {
+        $project: {
+          _id: 1,
+          amountOwed: 1,
+          isSettled: 1,
+          userId: 1,
+        },
+      },
+    ]); */
+
+    res.status(200).json(
+      new SuccessResponse(
+        200,
+        { splits: { settled, notSettled } },
+        // { splitsAggregate },
+        'Fetched Split Successfully'
+      )
+    );
+  }
+);
 
 export {
   createGroup,
@@ -350,4 +420,5 @@ export {
   fetchGroupExpenseDetails,
   updateGroupExpense,
   destroyGroupExpense,
+  fetchGroupExpenseSplits,
 };
